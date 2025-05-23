@@ -18,14 +18,19 @@ namespace Empire_Defence
         public void StartNextWave()
         {
             CurrentWave++;
-            enemiesToSpawn = 3 + CurrentWave * 2; //ВОЛНЫ
+            enemiesToSpawn = 3 + CurrentWave * 2;
             enemiesSpawned = 0;
             spawnTimer = 0f;
             IsWaveActive = true;
         }
 
-        public void Update(GameTime gameTime, List<Enemy> enemies, Texture2D enemyTexture)
+        public void Update(GameTime gameTime, List<Enemy> enemies, Texture2D enemyTexture, int mapWidth)
         {
+            if (enemiesSpawned >= enemiesToSpawn && enemies.TrueForAll(e => !e.IsAlive))
+            {
+                IsWaveActive = false;
+            }
+
             if (!IsWaveActive) return;
 
             spawnTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -33,7 +38,11 @@ namespace Empire_Defence
             if (spawnTimer <= 0f && enemiesSpawned < enemiesToSpawn)
             {
                 spawnTimer = spawnInterval;
-                enemies.Add(new Enemy(new Vector2(0, 350), enemyTexture));
+
+                float spawnX = -100;
+                spawnX = MathHelper.Clamp(spawnX, 0, mapWidth - enemyTexture.Width);
+
+                enemies.Add(new Enemy(new Vector2(spawnX, 800 - enemyTexture.Height), enemyTexture));
                 enemiesSpawned++;
             }
 

@@ -15,60 +15,57 @@ namespace Empire_Defence
 
         private float attackCooldown = 1.0f;
         private float attackTimer = 0f;
-        private Building target;
+        private IDamageable target;
 
         public Enemy(Vector2 spawnPos, Texture2D texture)
         {
             Texture = texture;
-            Position = new Vector2(spawnPos.X, 350 - texture.Height); // стоим на земле
+            Position = new Vector2(spawnPos.X, 800 - texture.Height);
         }
 
-        public void Update(GameTime gameTime, List<Building> potentialTargets)
+        public void Update(GameTime gameTime, List<IDamageable> targets)
         {
             if (!IsAlive) return;
 
             attackTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Найти новую цель, если старая уничтожена
-            if (target == null || !target.IsAlive)
-                target = FindNearestTarget(potentialTargets);
+            target = FindNearestTarget(targets);
 
             if (target != null)
             {
                 float distance = Vector2.Distance(Position, target.Position);
+                float stopDistance = (Texture.Width + 32) / 2f;
 
-                if (distance > 10f)
+                if (distance > stopDistance)
                 {
                     Vector2 dir = target.Position - Position;
-                    dir.Normalize();
+                    dir.Y = 0;
+                    if (dir != Vector2.Zero)
+                        dir.Normalize();
                     Position += dir * Speed;
                 }
-                else
+                else if (attackTimer <= 0)
                 {
-                    // Атака
-                    if (attackTimer <= 0)
-                    {
-                        target.HP -= 10;
-                        attackTimer = attackCooldown;
-                    }
+                    target.TakeDamage(10);
+                    attackTimer = attackCooldown;
                 }
             }
         }
 
-        private Building FindNearestTarget(List<Building> targets)
+        private IDamageable FindNearestTarget(List<IDamageable> targets)
         {
+            IDamageable nearest = null;
             float closest = float.MaxValue;
-            Building nearest = null;
 
-            foreach (var b in targets)
+            foreach (var t in targets)
             {
-                if (!b.IsAlive) continue;
+                if (!t.IsAlive) continue;
 
-                float dist = Vector2.Distance(Position, b.Position);
+                float dist = Vector2.Distance(Position, t.Position);
                 if (dist < closest)
                 {
                     closest = dist;
-                    nearest = b;
+                    nearest = t;
                 }
             }
 

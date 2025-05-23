@@ -14,7 +14,7 @@ namespace Empire_Defence
         private float fireTimer = 0f;
 
         public Tower(Vector2 position, Texture2D texture, Texture2D projectileTexture)
-            : base(position, texture, 75) // HP башни
+            : base(position, texture, 75)
         {
             ProjectileTexture = projectileTexture;
 

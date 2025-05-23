@@ -34,36 +34,31 @@ namespace Empire_Defence
             _phantomHouse = content.Load<Texture2D>("phantom_house");
             _phantomTower = content.Load<Texture2D>("phantom_tower");
 
-            _buildSites.Add(new BuildingSite(new Vector2(800, 350 - _castleTexture.Height), BuildingType.Castle, _phantomCastle));
-            _buildSites.Add(new BuildingSite(new Vector2(400, 350 - _wallTexture.Height), BuildingType.Wall, _phantomWall));
-            _buildSites.Add(new BuildingSite(new Vector2(500, 350 - _houseTexture.Height), BuildingType.House, _phantomHouse));
-            _buildSites.Add(new BuildingSite(new Vector2(550, 350 - _towerTexture.Height), BuildingType.Tower, _phantomTower));
+            _buildSites.Add(new BuildingSite(new Vector2(800, 800 - _castleTexture.Height), BuildingType.Castle, _phantomCastle));
+            _buildSites.Add(new BuildingSite(new Vector2(400, 800 - _wallTexture.Height), BuildingType.Wall, _phantomWall));
+            _buildSites.Add(new BuildingSite(new Vector2(500, 800 - _houseTexture.Height), BuildingType.House, _phantomHouse));
+            _buildSites.Add(new BuildingSite(new Vector2(550, 800 - _towerTexture.Height), BuildingType.Tower, _phantomTower));
         }
 
         public void Update(Player player) { }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            // 1. Стены (самые передние)
             foreach (var wall in _walls)
                 if (wall.IsAlive)
                     wall.Draw(spriteBatch);
 
-            // 2. Дома
             foreach (var house in _houses)
                 if (house.IsAlive)
                     house.Draw(spriteBatch);
 
-            // 3. Башни
             foreach (var tower in _towers)
                 if (tower.IsAlive)
                     tower.Draw(spriteBatch);
 
-            // 4. Замок (самый дальний)
             if (_castle != null && _castle.IsAlive)
                 _castle.Draw(spriteBatch);
 
-            // 5. Фантомные участки
             foreach (var site in _buildSites)
                 site.Draw(spriteBatch);
         }
@@ -93,13 +88,16 @@ namespace Empire_Defence
 
 
 
-        public void TryBuildNearby(Player player)
+        public void TryBuildNearby(Player player, int mapWidth)
         {
+
+
             foreach (var site in _buildSites)
             {
                 if (site.IsBuilt || !site.IsVisible)
                     continue;
-
+                if (site.Position.X < 0 || site.Position.X > mapWidth)
+                    continue;
                 float distance = Vector2.Distance(player.Position, site.Position);
                 if (distance < 80f)
                 {
