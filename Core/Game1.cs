@@ -75,11 +75,25 @@ namespace Empire_Defence.Core
 
         protected override void Initialize()
         {
-            _player = new Player { Position = new Vector2(700, 900) };
+            var screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+            var screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+
+            _graphics.PreferredBackBufferWidth = screenWidth;
+            _graphics.PreferredBackBufferHeight = screenHeight;
+
+            _graphics.IsFullScreen = true;
+            _graphics.ApplyChanges();
+
+            this.screenWidth = screenWidth;
+            this.screenHeight = screenHeight;
+
+            _player = new Player();
             _buildingManager = new BuildingManager();
             _waveManager = new WaveManager();
+
             base.Initialize();
         }
+
 
         protected override void LoadContent()
         {
@@ -207,12 +221,15 @@ namespace Empire_Defence.Core
             _player.Update(gameTime, background.Width);
             _buildingManager.Update(_player);
 
-            _cameraPosition = Vector2.Zero;
+            float zoom = 1.4f;
 
-            float zoom = 0.5f;
+            _cameraPosition = _player.Position - new Vector2(screenWidth / (2f * zoom), screenHeight / (2f * zoom));
+            _cameraPosition.X = MathHelper.Clamp(_cameraPosition.X, 0, mapWidth - screenWidth / zoom);
+            _cameraPosition.Y = MathHelper.Clamp(_cameraPosition.Y, 0, mapHeight - screenHeight / zoom);
             _cameraTransform =
                 Matrix.CreateTranslation(new Vector3(-_cameraPosition, 0)) *
                 Matrix.CreateScale(zoom);
+
 
             if (state.IsKeyDown(Keys.Space))
             {
@@ -327,7 +344,10 @@ namespace Empire_Defence.Core
             hasStartedOnce = true;
             _buildingManager.OnTavernBuilt = SpawnInitialUnits;
             _allies.Clear();
-
+            if (_buildingManager.Castle != null)
+                _player.Position = _buildingManager.Castle.Position + new Vector2(50, 0);
+            else
+                _player.Position = new Vector2(800, 800 - _player.Texture.Height);
         }
 
 
