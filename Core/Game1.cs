@@ -31,6 +31,8 @@ namespace Empire_Defence.Core
         private List<Wall> _walls = new();
         private MouseState _previousMouse;
 
+        private bool hasStartedOnce = false;
+
         private Matrix _cameraTransform;
         private Vector2 _cameraPosition;
 
@@ -57,9 +59,11 @@ namespace Empire_Defence.Core
 
         private bool isGameOver = false;
 
-        Rectangle btnStart = new Rectangle(320, 210, 100, 30);
+        Rectangle btnContinue = new Rectangle(320, 170, 150, 30);
+        Rectangle btnNewGame = new Rectangle(320, 210, 150, 30);
         Rectangle btnControls = new Rectangle(320, 250, 100, 30);
         Rectangle btnExit = new Rectangle(320, 290, 50, 30);
+
 
 
         public Game1()
@@ -152,15 +156,26 @@ namespace Empire_Defence.Core
 
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
-                    if (btnStart.Contains(mousePos))
+                    if (hasStartedOnce && btnContinue.Contains(mousePos))
+                    {
                         isGameStarted = true;
-
+                    }
+                    else if (btnNewGame.Contains(mousePos))
+                    {
+                        ResetGame();
+                        isGameStarted = true;
+                        hasStartedOnce = true;
+                    }
                     else if (btnControls.Contains(mousePos))
+                    {
                         isInInstructions = true;
-
+                    }
                     else if (btnExit.Contains(mousePos))
+                    {
                         Exit();
+                    }
                 }
+
 
                 return;
             }
@@ -301,7 +316,7 @@ namespace Empire_Defence.Core
             _buildingManager.LoadContent(Content);
 
             _enemies.Clear();
-            ResourceManager.Gold = 200;
+            ResourceManager.Gold = 2000;
 
             isNight = false;
             background = backgroundDay;
@@ -309,6 +324,10 @@ namespace Empire_Defence.Core
             isGameStarted = false;
             isInInstructions = false;
             isGameOver = false;
+            hasStartedOnce = true;
+            _buildingManager.OnTavernBuilt = SpawnInitialUnits;
+            _allies.Clear();
+
         }
 
 
@@ -385,14 +404,24 @@ namespace Empire_Defence.Core
                 }
                 else
                 {
-                    _spriteBatch.Draw(TextureUtils.WhitePixel, btnStart, new Color(0, 0, 0, 0));
+                    if (hasStartedOnce)
+                    {
+                        _spriteBatch.Draw(TextureUtils.WhitePixel, btnContinue, new Color(0, 0, 0, 0));
+                        _spriteBatch.DrawString(_font, "Продолжить", new Vector2(325, 180), Color.LightGreen);
+                    }
+
+                    _spriteBatch.Draw(TextureUtils.WhitePixel, btnNewGame, new Color(0, 0, 0, 0));
+                    _spriteBatch.DrawString(_font, "Новая игра", new Vector2(325, 220), Color.LightBlue);
+
                     _spriteBatch.Draw(TextureUtils.WhitePixel, btnControls, new Color(0, 0, 0, 0));
+                    _spriteBatch.DrawString(_font, "Управление", new Vector2(320, 260), Color.LightBlue);
+
                     _spriteBatch.Draw(TextureUtils.WhitePixel, btnExit, new Color(0, 0, 0, 0));
+                    _spriteBatch.DrawString(_font, "Выйти", new Vector2(320, 300), Color.OrangeRed);
+
 
                     _spriteBatch.DrawString(_font, "EMPIRE DEFENCE", new Vector2(300, 120), Color.White, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0f);
-                    _spriteBatch.DrawString(_font, "Начать игру", new Vector2(320, 220), Color.LightGreen);
-                    _spriteBatch.DrawString(_font, "Управление", new Vector2(320, 260), Color.LightBlue);
-                    _spriteBatch.DrawString(_font, "Выйти", new Vector2(320, 300), Color.OrangeRed);
+
                 }
 
                 _spriteBatch.End();
@@ -403,36 +432,28 @@ namespace Empire_Defence.Core
 
             _spriteBatch.Begin(transformMatrix: _cameraTransform);
 
-            // 1. Фон — рисуем самым первым
+
             for (int x = 0; x < mapWidth; x += background.Width * 2)
             {
                 _spriteBatch.Draw(background, new Vector2(x, 0), Color.White);
             }
 
-            // 2. Юниты и здания
+
             _player.Draw(_spriteBatch);
             _buildingManager.Draw(_spriteBatch);
 
             foreach (var ally in _allies)
-                ally.Draw(_spriteBatch); // ← добавь обязательно сюда!
+                ally.Draw(_spriteBatch);
 
             foreach (var enemy in _enemies)
                 enemy.Draw(_spriteBatch);
 
-            // 3. UI: HP игрока
-            //_spriteBatch.DrawString(_font, $"HP: {_player.HP}/{_player.MaxHP}", new Vector2(10, 100), Color.White);
-
             _spriteBatch.End();
 
-            // 4. UI-элементы без камеры
             _spriteBatch.Begin();
 
             _spriteBatch.DrawString(_font, $"Gold: {ResourceManager.Gold}", new Vector2(20, 10), Color.White);
             _spriteBatch.DrawString(_font, $"Wave: {_waveManager.CurrentWave}", new Vector2(20, 40), Color.White);
-            //_spriteBatch.DrawString(_font,
-                //_waveManager.IsWaveActive ? "Enemies incoming!" : "Press ENTER to start next wave",
-                //new Vector2(10, 70),
-                //_waveManager.IsWaveActive ? Color.Red : Color.LightGreen);
 
             _spriteBatch.End();
 
