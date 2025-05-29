@@ -1,9 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Empire_Defence.Interfaces;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace Empire_Defence
+namespace Empire_Defence.Entities
 {
     public class Player : IDamageable
     {
@@ -12,6 +13,8 @@ namespace Empire_Defence
         private Vector2 _velocity;
         private float _speed = 150f;
         private float _jumpForce = -350f;
+        private Texture2D _textureLeft;
+        private Texture2D _textureRight;
 
         private bool _isGrounded;
         private float _gravity = 1000f;
@@ -28,7 +31,11 @@ namespace Empire_Defence
 
         public void LoadContent(ContentManager content)
         {
-            _texture = content.Load<Texture2D>("player_idle");
+            _textureRight = content.Load<Texture2D>("player_idle");
+            _textureLeft = content.Load<Texture2D>("player_idle2");
+            _texture = _textureRight;
+
+
         }
         public void Respawn()
         {
@@ -55,11 +62,21 @@ namespace Empire_Defence
             KeyboardState ks = Keyboard.GetState();
 
             if (ks.IsKeyDown(Keys.A))
+            {
                 _velocity.X = -_speed;
+                _texture = _textureLeft;
+            }
             else if (ks.IsKeyDown(Keys.D))
+            {
                 _velocity.X = _speed;
+                _texture = _textureRight;
+            }
             else
+            {
                 _velocity.X = 0;
+            }
+
+
 
             if (ks.IsKeyDown(Keys.W) && _isGrounded)
             {

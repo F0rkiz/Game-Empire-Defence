@@ -1,9 +1,15 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Empire_Defence.Allies;
+using Empire_Defence.Buildings;
+using Empire_Defence.Entities;
+using Empire_Defence.Interfaces;
+using Empire_Defence.Managers;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 
-namespace Empire_Defence
+namespace Empire_Defence.Core
 {
     public class Game1 : Game
     {
@@ -12,6 +18,10 @@ namespace Empire_Defence
 
         private Texture2D groundTile;
         private int screenWidth, screenHeight;
+
+        private List<Ally> _allies = new();
+        private Texture2D _archerTexture;
+        private Texture2D _warriorTexture;
 
         private Player _player;
         private Texture2D _wallTexture;
@@ -45,6 +55,8 @@ namespace Empire_Defence
         Texture2D backgroundNight;
         bool isNight = false;
 
+        private bool isGameOver = false;
+
         Rectangle btnStart = new Rectangle(320, 210, 100, 30);
         Rectangle btnControls = new Rectangle(320, 250, 100, 30);
         Rectangle btnExit = new Rectangle(320, 290, 50, 30);
@@ -59,7 +71,7 @@ namespace Empire_Defence
 
         protected override void Initialize()
         {
-            _player = new Player { Position = new Vector2(700,900) };
+            _player = new Player { Position = new Vector2(700, 900) };
             _buildingManager = new BuildingManager();
             _waveManager = new WaveManager();
             base.Initialize();
@@ -69,6 +81,10 @@ namespace Empire_Defence
         {
             TextureUtils.Initialize(GraphicsDevice);
 
+            _buildingManager.OnTavernBuilt = SpawnInitialUnits;
+
+
+
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             screenWidth = GraphicsDevice.Viewport.Width;
             screenHeight = GraphicsDevice.Viewport.Height;
@@ -77,7 +93,10 @@ namespace Empire_Defence
             _wallTexture = Content.Load<Texture2D>("wall");
             _towerTexture = Content.Load<Texture2D>("tower");
             _projectileTexture = Content.Load<Texture2D>("projectile");
-            _enemyTexture = Content.Load<Texture2D>("enemy");
+            _enemyTexture = Content.Load<Texture2D>("warrior_goblin");
+
+            _archerTexture = Content.Load<Texture2D>("archer");
+            _warriorTexture = Content.Load<Texture2D>("warrior");
 
             _player.LoadContent(Content);
             _font = Content.Load<SpriteFont>("DefaultFont");
@@ -93,6 +112,30 @@ namespace Empire_Defence
         protected override void Update(GameTime gameTime)
         {
             KeyboardState state = Keyboard.GetState();
+
+            if (Keyboard.GetState().IsKeyDown(Keys.D3)) // клавиша 3
+            {
+                foreach (var ally in _allies)
+                    if (ally is Archer)
+                        ally.FollowPlayer = true;
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.D2)) // клавиша 2
+            {
+                foreach (var ally in _allies)
+                    if (ally is Warrior)
+                        ally.FollowPlayer = true;
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.D1))
+            {
+                foreach (var ally in _allies)
+                    ally.FollowPlayer = true;
+                }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.F)) // зафиксировать в точке
+            {
+                foreach (var ally in _allies)
+                    ally.FollowPlayer = false;
+            }
 
             if (!isGameStarted)
             {
@@ -128,6 +171,10 @@ namespace Empire_Defence
                 isInInstructions = false;
                 return;
             }
+            if (_buildingManager.Castle != null && _buildingManager.Castle.HP <= 0)
+            {
+                isGameOver = true;
+            }
 
             _enemies.RemoveAll(e => !e.IsAlive);
 
@@ -139,6 +186,7 @@ namespace Empire_Defence
                 _buildingManager.RestoreAllBuildings();
                 if (!_player.IsAlive)
                     _player.Respawn();
+                SpawnAlliesFromTaverns();
             }
 
             _player.Update(gameTime, background.Width);
@@ -178,6 +226,7 @@ namespace Empire_Defence
             List<IDamageable> allTargets = new();
             allTargets.Add(_player);
             allTargets.AddRange(targets);
+            allTargets.AddRange(_allies);
 
             foreach (var enemy in _enemies)
                 enemy.Update(gameTime, allTargets);
@@ -198,26 +247,125 @@ namespace Empire_Defence
                     }
                 }
             }
+            Dictionary<Enemy, int> plannedDamage = new();
+
+            foreach (var ally in _allies)
+            {
+                ally.Update(gameTime, _enemies, _player);
+
+                if (ally is Archer archer)
+                {
+                    foreach (var proj in archer.Projectiles)
+                    {
+                        foreach (var enemy in _enemies)
+                        {
+                            if (Vector2.Distance(proj.Position, enemy.Position) < 50f && proj.IsActive && enemy.IsAlive)
+                            {
+                                enemy.HP -= archer.Damage;
+                                proj.IsActive = false;
+                                Console.WriteLine("Попадание засчитано");
+                            }
+                        }
+                    }
+
+                    archer.Projectiles.RemoveAll(p => !p.IsActive);
+                }
+            }
+
 
             _enemies.RemoveAll(e => !e.IsAlive);
             base.Update(gameTime);
+            if (isGameOver)
+            {
+                if (Keyboard.GetState().IsKeyDown(Keys.Enter))
+                {
+                    ResetGame();
+                }
+
+                return;
+            }
+
+            foreach (var ally in _allies)
+                ally.Update(gameTime, _enemies, _player);
+
+
+
+        }
+        private void ResetGame()
+        {
+            _player = new Player();
+            _player.LoadContent(Content);
+
+            _waveManager = new WaveManager();
+            _buildingManager = new BuildingManager();
+            _buildingManager.LoadContent(Content);
+
+            _enemies.Clear();
+            ResourceManager.Gold = 200;
+
+            isNight = false;
+            background = backgroundDay;
+
+            isGameStarted = false;
+            isInInstructions = false;
+            isGameOver = false;
         }
 
 
-        private List<Empire_Defence.Buildings.Building> GetAllBuildings()
+
+        private List<Buildings.Building> GetAllBuildings()
         {
-            var buildings = new List<Empire_Defence.Buildings.Building>();
+            var buildings = new List<Buildings.Building>();
             if (_buildingManager.Castle != null && _buildingManager.Castle.HP > 0)
                 buildings.Add(_buildingManager.Castle);
             buildings.AddRange(_buildingManager.GetAliveWalls());
             buildings.AddRange(_buildingManager.GetAliveHouses());
             return buildings;
         }
+        private void SpawnAlliesFromTaverns()
+        {
+            foreach (var tavern in _buildingManager.GetTaverns())
+            {
+                int count = tavern.GetSpawnCount();
+                for (int i = 0; i < count; i++)
+                {
+                    Vector2 spawnPos = tavern.Position + new Vector2(i * 10, 20);
+
+                    if (tavern.Type == TavernType.Archer)
+                        _allies.Add(new Archer(spawnPos, _archerTexture, _projectileTexture));
+
+                    else
+                        _allies.Add(new Warrior(spawnPos, _warriorTexture));
+                }
+            }
+        }
+        private void SpawnInitialUnits(Tavern tavern)
+        {
+            int count = tavern.GetSpawnCount();
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 spawn = tavern.Position + new Vector2(i * 10, 20);
+                if (tavern.Type == TavernType.Archer)
+                    _allies.Add(new Archer(spawn, _archerTexture, _projectileTexture));
+                else
+                    _allies.Add(new Warrior(spawn, _warriorTexture));
+            }
+        }
+
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Black);
+            Console.WriteLine("Allies count: " + _allies.Count);
 
+            GraphicsDevice.Clear(Color.Black);
+            if (isGameOver)
+            {
+                _spriteBatch.Begin();
+                _spriteBatch.DrawString(_font, "ИГРА ОКОНЧЕНА", new Vector2(300, 200), Color.Red, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0f);
+                _spriteBatch.DrawString(_font, "Нажмите ENTER, чтобы вернуться в меню", new Vector2(280, 300), Color.White);
+                _spriteBatch.End();
+                return;
+            }
             if (!isGameStarted)
             {
                 _spriteBatch.Begin();
@@ -229,7 +377,11 @@ namespace Empire_Defence
                     _spriteBatch.DrawString(_font, "Space - построить", new Vector2(300, 190), Color.LightGray);
                     _spriteBatch.DrawString(_font, "Enter - начать волну", new Vector2(300, 220), Color.LightGray);
                     _spriteBatch.DrawString(_font, "Esc - открыть меню", new Vector2(300, 250), Color.LightGray);
-                    _spriteBatch.DrawString(_font, "Нажмите ESC, чтобы вернуться", new Vector2(300, 310), Color.Yellow);
+                    _spriteBatch.DrawString(_font, "Нажмите ESC, чтобы вернуться", new Vector2(300, 410), Color.Yellow);
+                    _spriteBatch.DrawString(_font, "1 - Все союзники следуют за игроком", new Vector2(300, 280), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "2 - Только воины следуют за игроком", new Vector2(300, 310), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "3 - Только лучники следуют за игроком", new Vector2(300, 340), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "F - Все союзники остаются на месте", new Vector2(300, 370), Color.LightGray);
                 }
                 else
                 {
@@ -248,40 +400,42 @@ namespace Empire_Defence
             }
 
 
+
             _spriteBatch.Begin(transformMatrix: _cameraTransform);
+
+            // 1. Фон — рисуем самым первым
             for (int x = 0; x < mapWidth; x += background.Width * 2)
             {
                 _spriteBatch.Draw(background, new Vector2(x, 0), Color.White);
             }
 
+            // 2. Юниты и здания
             _player.Draw(_spriteBatch);
-
-            int hpBarWidth = 50;
-            int hpBarHeight = 6;
-            int hpFill = (int)(hpBarWidth * (_player.HP / (float)_player.MaxHP));
-            Vector2 hpPosition = new Vector2(
-                _player.Position.X + (_player.Texture.Width / 2) - (hpBarWidth / 2),
-                _player.Position.Y - 10
-            );
-            _spriteBatch.Draw(TextureUtils.WhitePixel, new Rectangle((int)hpPosition.X, (int)hpPosition.Y, hpBarWidth, hpBarHeight), Color.DarkRed);
-            _spriteBatch.Draw(TextureUtils.WhitePixel, new Rectangle((int)hpPosition.X, (int)hpPosition.Y, hpFill, hpBarHeight), Color.LimeGreen);
-
             _buildingManager.Draw(_spriteBatch);
+
+            foreach (var ally in _allies)
+                ally.Draw(_spriteBatch); // ← добавь обязательно сюда!
 
             foreach (var enemy in _enemies)
                 enemy.Draw(_spriteBatch);
 
+            // 3. UI: HP игрока
+            //_spriteBatch.DrawString(_font, $"HP: {_player.HP}/{_player.MaxHP}", new Vector2(10, 100), Color.White);
+
             _spriteBatch.End();
 
+            // 4. UI-элементы без камеры
             _spriteBatch.Begin();
+
             _spriteBatch.DrawString(_font, $"Gold: {ResourceManager.Gold}", new Vector2(20, 10), Color.White);
             _spriteBatch.DrawString(_font, $"Wave: {_waveManager.CurrentWave}", new Vector2(20, 40), Color.White);
             //_spriteBatch.DrawString(_font,
-            //    _waveManager.IsWaveActive ? "Enemies incoming!" : "Press ENTER to start next wave",
-            //    new Vector2(10, 70),
-            //    _waveManager.IsWaveActive ? Color.Red : Color.LightGreen);
+                //_waveManager.IsWaveActive ? "Enemies incoming!" : "Press ENTER to start next wave",
+                //new Vector2(10, 70),
+                //_waveManager.IsWaveActive ? Color.Red : Color.LightGreen);
 
             _spriteBatch.End();
+
 
             base.Draw(gameTime);
         }

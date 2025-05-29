@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Empire_Defence.Buildings
+namespace Empire_Defence.Sites
 {
     public class BuildingSite
     {
@@ -18,7 +18,7 @@ namespace Empire_Defence.Buildings
             Type = type;
             _phantomTexture = phantomTexture;
             IsBuilt = false;
-            IsVisible = (type == BuildingType.Castle); 
+            IsVisible = type == BuildingType.Castle; 
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -39,8 +39,10 @@ namespace Empire_Defence.Buildings
     public enum BuildingType
     {
         Castle,
-        House,
         Wall,
-        Tower
+        House,
+        Tower,
+        TavernArcher,
+        TavernWarrior
     }
 }

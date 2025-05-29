@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Empire_Defence.Interfaces;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Empire_Defence.Buildings

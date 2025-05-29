@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Empire_Defence
+namespace Empire_Defence.Entities
 {
     public class Projectile
     {
@@ -23,6 +23,8 @@ namespace Empire_Defence
 
         public void Update()
         {
+            if (!IsActive) return;
+
             Position += Velocity;
         }
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Empire_Defence
+namespace Empire_Defence.Managers
 {
     internal class UIManager
     {

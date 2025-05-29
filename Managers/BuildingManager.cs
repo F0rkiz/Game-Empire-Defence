@@ -1,20 +1,32 @@
-﻿using Microsoft.Xna.Framework;
+﻿
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using Empire_Defence.Buildings;
+using Microsoft.Xna.Framework.Input;
+using System;
+using Empire_Defence.Sites;
+using Empire_Defence.Entities;
+using Empire_Defence.Core;
 
-namespace Empire_Defence
+namespace Empire_Defence.Managers
 {
+
     public class BuildingManager
     {
+        public Action<Tavern> OnTavernBuilt;
+
         private Castle _castle;
         private List<Wall> _walls = new();
         private List<House> _houses = new();
         private List<Tower> _towers = new();
+        private List<Tavern> _taverns = new();
 
         private Texture2D _castleTexture, _wallTexture, _houseTexture, _towerTexture, _projectileTexture;
         private Texture2D _phantomCastle, _phantomWall, _phantomHouse, _phantomTower;
+        private Texture2D _tavernArcherTexture, _tavernWarriorTexture;
+        private Texture2D _phantomTavernArcher, _phantomTavernWarrior;
 
         private List<BuildingSite> _buildSites = new();
 
@@ -29,15 +41,26 @@ namespace Empire_Defence
             _towerTexture = content.Load<Texture2D>("tower");
             _projectileTexture = content.Load<Texture2D>("projectile");
 
+            _tavernArcherTexture = content.Load<Texture2D>("tavern_archer");
+            _tavernWarriorTexture = content.Load<Texture2D>("tavern_warrior");
+
+
             _phantomCastle = content.Load<Texture2D>("phantom_castle");
             _phantomWall = content.Load<Texture2D>("phantom_wall");
             _phantomHouse = content.Load<Texture2D>("phantom_house");
             _phantomTower = content.Load<Texture2D>("phantom_tower");
+            _phantomTavernArcher = content.Load<Texture2D>("phantom_tavern_archer");
+            _phantomTavernWarrior = content.Load<Texture2D>("phantom_tavern_warrior");
 
-            _buildSites.Add(new BuildingSite(new Vector2(800, 800 - _castleTexture.Height), BuildingType.Castle, _phantomCastle));
-            _buildSites.Add(new BuildingSite(new Vector2(400, 800 - _wallTexture.Height), BuildingType.Wall, _phantomWall));
-            _buildSites.Add(new BuildingSite(new Vector2(500, 800 - _houseTexture.Height), BuildingType.House, _phantomHouse));
-            _buildSites.Add(new BuildingSite(new Vector2(550, 800 - _towerTexture.Height), BuildingType.Tower, _phantomTower));
+            _buildSites.Add(new BuildingSite(new Vector2(1200, 815 - _castleTexture.Height), BuildingType.Castle, _phantomCastle));
+            _buildSites.Add(new BuildingSite(new Vector2(400, 815 - _wallTexture.Height), BuildingType.Wall, _phantomWall));
+            _buildSites.Add(new BuildingSite(new Vector2(1100, 815 - _houseTexture.Height), BuildingType.House, _phantomHouse));
+            _buildSites.Add(new BuildingSite(new Vector2(1000, 815 - _houseTexture.Height), BuildingType.House, _phantomHouse));
+            _buildSites.Add(new BuildingSite(new Vector2(1350, 815 - _houseTexture.Height), BuildingType.House, _phantomHouse));
+            _buildSites.Add(new BuildingSite(new Vector2(650, 815 - _houseTexture.Height), BuildingType.House, _phantomHouse));
+            _buildSites.Add(new BuildingSite(new Vector2(500, 815 - _towerTexture.Height), BuildingType.Tower, _phantomTower));
+            _buildSites.Add(new BuildingSite(new Vector2(750, 815 - _tavernArcherTexture.Height), BuildingType.TavernArcher, _phantomTavernArcher));
+            _buildSites.Add(new BuildingSite(new Vector2(900, 815 - _tavernWarriorTexture.Height), BuildingType.TavernWarrior, _phantomTavernWarrior));
         }
 
         public void Update(Player player) { }
@@ -56,13 +79,16 @@ namespace Empire_Defence
                 if (tower.IsAlive)
                     tower.Draw(spriteBatch);
 
+            foreach (var tavern in _taverns)
+                if (tavern.IsAlive)
+                    tavern.Draw(spriteBatch);
+
             if (_castle != null && _castle.IsAlive)
                 _castle.Draw(spriteBatch);
 
             foreach (var site in _buildSites)
                 site.Draw(spriteBatch);
         }
-
 
         public void RestoreAllBuildings()
         {
@@ -80,18 +106,17 @@ namespace Empire_Defence
             foreach (var tower in _towers)
                 if (!tower.IsAlive)
                     tower.Restore();
-        }
-        public List<Tower> GetTowers()
-        {
-            return _towers;
+
+            foreach (var tavern in _taverns)
+                if (!tavern.IsAlive)
+                    tavern.Restore();
         }
 
-
+        public List<Tower> GetTowers() => _towers;
+        public List<Tavern> GetTaverns() => _taverns;
 
         public void TryBuildNearby(Player player, int mapWidth)
         {
-
-
             foreach (var site in _buildSites)
             {
                 if (site.IsBuilt || !site.IsVisible)
@@ -132,7 +157,28 @@ namespace Empire_Defence
                                 site.IsBuilt = true;
                             }
                             break;
+                        case BuildingType.TavernArcher:
+                            if (IsCastleBuilt && ResourceManager.SpendGold(40))
+                            {
+                                var tavern = new Tavern(site.Position, _tavernArcherTexture, TavernType.Archer);
+                                _taverns.Add(tavern);
+                                site.IsBuilt = true;
 
+                                OnTavernBuilt?.Invoke(tavern);
+                            }
+                            break;
+                        case BuildingType.TavernWarrior:
+                            if (IsCastleBuilt && ResourceManager.SpendGold(40))
+                            {
+                                var tavern = new Tavern(site.Position, _tavernWarriorTexture, TavernType.Warrior);
+
+                                _taverns.Add(tavern);
+                                site.IsBuilt = true;
+
+                                OnTavernBuilt?.Invoke(tavern);
+
+                            }
+                            break;
                     }
 
                     if (site.Type == BuildingType.Castle)

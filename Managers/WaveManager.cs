@@ -1,8 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Empire_Defence.Entities;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace Empire_Defence
+namespace Empire_Defence.Managers
 {
     public class WaveManager
     {
@@ -18,7 +19,7 @@ namespace Empire_Defence
         public void StartNextWave()
         {
             CurrentWave++;
-            enemiesToSpawn = 3 + CurrentWave * 2;
+            enemiesToSpawn = 1 + CurrentWave * 2;
             enemiesSpawned = 0;
             spawnTimer = 0f;
             IsWaveActive = true;

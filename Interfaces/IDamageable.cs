@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace Empire_Defence
+namespace Empire_Defence.Interfaces
 {
     public interface IDamageable
     {

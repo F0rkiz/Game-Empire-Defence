@@ -1,8 +1,8 @@
-﻿using Empire_Defence.Buildings;
+﻿using Empire_Defence.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Empire_Defence
+namespace Empire_Defence.Buildings
 {
     public class House : Building
     {

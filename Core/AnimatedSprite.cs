@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Empire_Defence
+namespace Empire_Defence.Core
 {
     public class AnimatedSprite
     {

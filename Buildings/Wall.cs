@@ -1,8 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Empire_Defence.Buildings;
 
-namespace Empire_Defence
+namespace Empire_Defence.Buildings
 {
     public class Wall : Building
     {

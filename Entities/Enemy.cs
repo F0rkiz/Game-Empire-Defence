@@ -1,9 +1,10 @@
 ﻿using Empire_Defence.Buildings;
+using Empire_Defence.Interfaces;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace Empire_Defence
+namespace Empire_Defence.Entities
 {
     public class Enemy
     {

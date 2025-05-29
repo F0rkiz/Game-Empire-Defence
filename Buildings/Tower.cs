@@ -1,9 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
-using Empire_Defence.Buildings;
+using Empire_Defence.Entities;
 
-namespace Empire_Defence
+namespace Empire_Defence.Buildings
 {
     public class Tower : Building
     {
