@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Empire_Defence.Core
 {
@@ -59,10 +60,10 @@ namespace Empire_Defence.Core
 
         private bool isGameOver = false;
 
-        Rectangle btnContinue = new Rectangle(320, 170, 150, 30);
-        Rectangle btnNewGame = new Rectangle(320, 210, 150, 30);
-        Rectangle btnControls = new Rectangle(320, 250, 100, 30);
-        Rectangle btnExit = new Rectangle(320, 290, 50, 30);
+        Rectangle btnContinue = new Rectangle(800, 440, 150, 30);
+        Rectangle btnNewGame = new Rectangle(800, 480, 150, 30);
+        Rectangle btnControls = new Rectangle(800, 520, 100, 30);
+        Rectangle btnExit = new Rectangle(800, 560, 50, 30);
 
 
 
@@ -215,6 +216,7 @@ namespace Empire_Defence.Core
                 _buildingManager.RestoreAllBuildings();
                 if (!_player.IsAlive)
                     _player.Respawn();
+                _allies.Clear();
                 SpawnAlliesFromTaverns();
             }
 
@@ -355,12 +357,18 @@ namespace Empire_Defence.Core
         private List<Buildings.Building> GetAllBuildings()
         {
             var buildings = new List<Buildings.Building>();
+
             if (_buildingManager.Castle != null && _buildingManager.Castle.HP > 0)
                 buildings.Add(_buildingManager.Castle);
+
             buildings.AddRange(_buildingManager.GetAliveWalls());
             buildings.AddRange(_buildingManager.GetAliveHouses());
+            buildings.AddRange(_buildingManager.GetTowers().Where(t => t.IsAlive));
+            buildings.AddRange(_buildingManager.GetTaverns().Where(t => t.IsAlive));
+
             return buildings;
         }
+
         private void SpawnAlliesFromTaverns()
         {
             foreach (var tavern in _buildingManager.GetTaverns())
@@ -400,8 +408,8 @@ namespace Empire_Defence.Core
             if (isGameOver)
             {
                 _spriteBatch.Begin();
-                _spriteBatch.DrawString(_font, "ИГРА ОКОНЧЕНА", new Vector2(300, 200), Color.Red, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0f);
-                _spriteBatch.DrawString(_font, "Нажмите ENTER, чтобы вернуться в меню", new Vector2(280, 300), Color.White);
+                _spriteBatch.DrawString(_font, "ИГРА ОКОНЧЕНА", new Vector2(800, 400), Color.Red, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0f);
+                _spriteBatch.DrawString(_font, "Нажмите ENTER, чтобы вернуться в меню", new Vector2(800, 480), Color.White);
                 _spriteBatch.End();
                 return;
             }
@@ -411,36 +419,36 @@ namespace Empire_Defence.Core
 
                 if (isInInstructions)
                 {
-                    _spriteBatch.DrawString(_font, "УПРАВЛЕНИЕ", new Vector2(300, 100), Color.White, 0f, Vector2.Zero, 1.5f, SpriteEffects.None, 0f);
-                    _spriteBatch.DrawString(_font, "WAD - движение", new Vector2(300, 160), Color.LightGray);
-                    _spriteBatch.DrawString(_font, "Space - построить", new Vector2(300, 190), Color.LightGray);
-                    _spriteBatch.DrawString(_font, "Enter - начать волну", new Vector2(300, 220), Color.LightGray);
-                    _spriteBatch.DrawString(_font, "Esc - открыть меню", new Vector2(300, 250), Color.LightGray);
-                    _spriteBatch.DrawString(_font, "Нажмите ESC, чтобы вернуться", new Vector2(300, 410), Color.Yellow);
-                    _spriteBatch.DrawString(_font, "1 - Все союзники следуют за игроком", new Vector2(300, 280), Color.LightGray);
-                    _spriteBatch.DrawString(_font, "2 - Только воины следуют за игроком", new Vector2(300, 310), Color.LightGray);
-                    _spriteBatch.DrawString(_font, "3 - Только лучники следуют за игроком", new Vector2(300, 340), Color.LightGray);
-                    _spriteBatch.DrawString(_font, "F - Все союзники остаются на месте", new Vector2(300, 370), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "УПРАВЛЕНИЕ", new Vector2(800, 400), Color.White, 0f, Vector2.Zero, 1.5f, SpriteEffects.None, 0f);
+                    _spriteBatch.DrawString(_font, "WAD - движение", new Vector2(800, 440), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "Space - построить", new Vector2(800, 480), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "Enter - начать волну", new Vector2(800, 520), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "Esc - открыть меню", new Vector2(800, 560), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "Нажмите ESC, чтобы вернуться", new Vector2(800, 760), Color.Yellow);
+                    _spriteBatch.DrawString(_font, "1 - Все союзники следуют за игроком", new Vector2(800, 600), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "2 - Только воины следуют за игроком", new Vector2(800, 640), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "3 - Только лучники следуют за игроком", new Vector2(800, 680), Color.LightGray);
+                    _spriteBatch.DrawString(_font, "F - Все союзники остаются на месте", new Vector2(800, 720), Color.LightGray);
                 }
                 else
                 {
                     if (hasStartedOnce)
                     {
                         _spriteBatch.Draw(TextureUtils.WhitePixel, btnContinue, new Color(0, 0, 0, 0));
-                        _spriteBatch.DrawString(_font, "Продолжить", new Vector2(325, 180), Color.LightGreen);
+                        _spriteBatch.DrawString(_font, "Продолжить", new Vector2(800, 440), Color.LightGreen);
                     }
 
                     _spriteBatch.Draw(TextureUtils.WhitePixel, btnNewGame, new Color(0, 0, 0, 0));
-                    _spriteBatch.DrawString(_font, "Новая игра", new Vector2(325, 220), Color.LightBlue);
+                    _spriteBatch.DrawString(_font, "Новая игра", new Vector2(800, 480), Color.LightBlue);
 
                     _spriteBatch.Draw(TextureUtils.WhitePixel, btnControls, new Color(0, 0, 0, 0));
-                    _spriteBatch.DrawString(_font, "Управление", new Vector2(320, 260), Color.LightBlue);
+                    _spriteBatch.DrawString(_font, "Управление", new Vector2(800, 520), Color.LightBlue);
 
                     _spriteBatch.Draw(TextureUtils.WhitePixel, btnExit, new Color(0, 0, 0, 0));
-                    _spriteBatch.DrawString(_font, "Выйти", new Vector2(320, 300), Color.OrangeRed);
+                    _spriteBatch.DrawString(_font, "Выйти", new Vector2(800, 560), Color.OrangeRed);
 
 
-                    _spriteBatch.DrawString(_font, "EMPIRE DEFENCE", new Vector2(300, 120), Color.White, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0f);
+                    _spriteBatch.DrawString(_font, "EMPIRE DEFENCE", new Vector2(800, 400), Color.White, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0f);
 
                 }
 
@@ -472,8 +480,8 @@ namespace Empire_Defence.Core
 
             _spriteBatch.Begin();
 
-            _spriteBatch.DrawString(_font, $"Gold: {ResourceManager.Gold}", new Vector2(20, 10), Color.White);
-            _spriteBatch.DrawString(_font, $"Wave: {_waveManager.CurrentWave}", new Vector2(20, 40), Color.White);
+            _spriteBatch.DrawString(_font, $"Gold: {ResourceManager.Gold}", new Vector2(20, 10), Color.Black);
+            _spriteBatch.DrawString(_font, $"Wave: {_waveManager.CurrentWave}", new Vector2(20, 40), Color.Black);
 
             _spriteBatch.End();
 
